@@ -101,7 +101,7 @@ analyzeBtn.addEventListener("click", async () => {
 
   const data = await resp.json();
 
-  result.innerText = JSON.stringify(data, null, 2);
+  result.innerText = data.result || "无返回结果";
   status.innerText = "分析完成";
 });
 </script>
