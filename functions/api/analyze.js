@@ -4,27 +4,22 @@ export async function onRequest({ request }) {
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Cloudflare Pages Functions 已连通（GET）"
+        message: "API 正常（GET）"
       }),
-      {
-        headers: {
-          "Content-Type": "application/json"
-        }
-      }
+      { headers: { "Content-Type": "application/json" } }
     );
   }
 
   if (request.method === "POST") {
+    const body = await request.json();
+
     return new Response(
       JSON.stringify({
         success: true,
-        message: "Cloudflare Pages Functions 已连通（POST）"
+        receivedText: body.text,
+        note: "这是来自 Cloudflare Functions 的响应"
       }),
-      {
-        headers: {
-          "Content-Type": "application/json"
-        }
-      }
+      { headers: { "Content-Type": "application/json" } }
     );
   }
 
