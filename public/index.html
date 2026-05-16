@@ -10,11 +10,79 @@
 <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
 
 <style>
-body.dark { background:#0f172a; color:white; }
-body.light { background:#f5f7fa; color:#111827; }
+:root {
+  --bg-dark: #0f172a;
+  --bg-light: #f5f7fa;
+  --card-dark: rgba(255,255,255,0.06);
+  --card-light: #ffffff;
+  --text-dark: #ffffff;
+  --text-light: #111827;
+}
 
-.card-dark { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);}
-.card-light { background:white; border:1px solid #e5e7eb;}
+body.dark {
+  background: var(--bg-dark);
+  color: var(--text-dark);
+}
+
+body.light {
+  background: var(--bg-light);
+  color: var(--text-light);
+}
+
+.card {
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.dark .card {
+  background: var(--card-dark);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+
+.light .card {
+  background: var(--card-light);
+  border: 1px solid #e5e7eb;
+}
+
+button {
+  transition: all .2s ease;
+}
+
+.dark button {
+  background: #2563eb;
+  color: white;
+}
+
+.light button {
+  background: #2563eb;
+  color: white;
+}
+
+button.secondary {
+  background: #6b7280;
+}
+
+.light button.secondary {
+  background: #4b5563;
+}
+
+.history-item {
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.dark .history-item {
+  background: rgba(255,255,255,0.1);
+}
+
+.light .history-item {
+  background: #e5e7eb;
+}
+
+.prose {
+  max-width: none;
+}
 </style>
 </head>
 
@@ -22,55 +90,50 @@ body.light { background:#f5f7fa; color:#111827; }
 
 <div class="flex h-screen">
 
-  <!-- ✅ 左侧历史记录（20%） -->
-  <aside id="historyCard" class="w-[20%] p-4 overflow-y-auto card-dark">
+  <!-- 左侧历史记录 -->
+  <aside class="w-[20%] p-4 overflow-y-auto card">
     <div class="flex justify-between items-center mb-4">
       <h2 class="text-lg font-bold">历史记录</h2>
     </div>
-
     <div id="historyList" class="space-y-2 text-sm"></div>
   </aside>
 
-  <!-- ✅ 主区域（80%） -->
-  <main class="w-[80%] flex flex-col p-6 gap-6">
+  <!-- 主区域 -->
+  <main class="w-[80%] flex flex-col gap-4 p-6">
 
-    <!-- ✅ 顶部栏 -->
+    <!-- 顶部栏 -->
     <div class="flex justify-between items-center">
       <h1 class="text-2xl font-bold">AI课堂反思助手</h1>
-      <button id="themeToggle" class="px-4 py-2 bg-gray-700 rounded-lg text-sm">切换模式</button>
+      <button id="themeToggle" class="secondary px-4 py-2 rounded-lg text-sm">
+        切换黑白模式
+      </button>
     </div>
 
-    <!-- ✅ 横版输入框 -->
-    <div id="inputCard" class="card-dark rounded-2xl p-6">
+    <!-- 横向输入 -->
+    <div class="card">
       <div class="flex gap-4 items-start">
-
         <textarea id="inputText"
           rows="6"
-          class="flex-1 p-4 rounded-lg border bg-transparent"
+          class="flex-1 p-3 rounded-lg border bg-transparent"
           placeholder="粘贴课堂实录..."></textarea>
 
-        <button id="analyzeBtn"
-          class="px-6 py-3 bg-blue-600 rounded-lg text-white h-fit">
+        <button id="analyzeBtn" class="px-6 py-3 rounded-lg">
           开始分析
         </button>
-
       </div>
     </div>
 
-    <!-- ✅ AI 分析结果区域（核心 70% 视觉重心） -->
-    <div id="resultCard"
-      class="card-dark rounded-2xl p-6 flex-1 overflow-hidden flex flex-col">
-
-      <div class="flex justify-between items-center mb-4">
+    <!-- 分析结果 -->
+    <div class="card flex-1 flex flex-col overflow-hidden">
+      <div class="flex justify-between items-center mb-3">
         <h2 class="text-xl font-bold">分析结果</h2>
-        <div class="flex gap-3">
-          <button id="copyBtn" class="px-3 py-1 bg-gray-700 rounded text-sm">复制</button>
-          <button id="pdfBtn" class="px-3 py-1 bg-green-600 rounded text-sm">导出PDF</button>
+        <div class="flex gap-2">
+          <button id="copyBtn" class="secondary px-3 py-1 rounded text-sm">复制</button>
+          <button id="pdfBtn" class="secondary px-3 py-1 rounded text-sm">导出PDF</button>
         </div>
       </div>
 
-      <div id="result"
-        class="prose max-w-none overflow-y-auto flex-1">
+      <div id="result" class="prose overflow-y-auto flex-1">
         暂无结果
       </div>
     </div>
@@ -78,123 +141,112 @@ body.light { background:#f5f7fa; color:#111827; }
   </main>
 </div>
 
-<!-- ✅ 历史放大弹窗 -->
+<!-- 历史放大弹窗 -->
 <div id="historyModal"
-  class="hidden fixed inset-0 bg-black/70 flex items-center justify-center">
-
-  <div class="bg-white text-black w-[70%] h-[80%] p-6 rounded-xl overflow-y-auto relative">
-
-    <button onclick="closeModal()"
-      class="absolute top-4 right-4 text-red-500 font-bold">关闭</button>
-
+  class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+  <div class="bg-white text-black w-[70%] h-[80%] rounded-xl p-6 overflow-y-auto relative">
+    <button onclick="closeModal()" class="absolute top-4 right-4 text-red-600 font-bold">关闭</button>
     <div id="modalContent"></div>
   </div>
 </div>
 
 <script>
+/* ========== 主题切换 ========== */
+const themeToggle = document.getElementById("themeToggle");
 
-/* ================== 主题切换 ================== */
-const themeToggle=document.getElementById("themeToggle");
-
-function applyTheme(mode){
-  document.body.className=mode+" min-h-screen";
-  document.querySelectorAll(".card-dark, .card-light").forEach(el=>{
-    el.className=(mode==="dark"?"card-dark":"card-light")+" rounded-2xl p-6";
-  });
+function applyTheme(mode) {
+  document.body.classList.remove("dark","light");
+  document.body.classList.add(mode);
+  localStorage.setItem("theme", mode);
 }
 
-let theme=localStorage.getItem("theme")||"dark";
+let theme = localStorage.getItem("theme") || "dark";
 applyTheme(theme);
 
-themeToggle.onclick=()=>{
-  theme=theme==="dark"?"light":"dark";
-  localStorage.setItem("theme",theme);
+themeToggle.onclick = () => {
+  theme = theme === "dark" ? "light" : "dark";
   applyTheme(theme);
 };
 
-/* ================== API 调用 ================== */
+/* ========== 调用分析 API ========== */
+document.getElementById("analyzeBtn").onclick = async () => {
+  const text = inputText.value.trim();
+  if (!text) return alert("请输入课堂实录");
 
-document.getElementById("analyzeBtn").onclick=async()=>{
-  const text=document.getElementById("inputText").value;
-  const resultDiv=document.getElementById("result");
+  result.innerHTML = "分析中...";
 
-  if(!text.trim()){alert("请输入文本");return;}
-
-  resultDiv.innerHTML="分析中...";
-
-  const resp=await fetch("/api/analyze",{
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({text})
+  const resp = await fetch("/api/analyze", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({ text })
   });
 
-  const data=await resp.json();
-  const html=marked.parse(data.result||"无结果");
+  const data = await resp.json();
+  const html = marked.parse(data.result || "无结果");
 
-  resultDiv.innerHTML=html;
-
-  saveHistory(text,html);
+  result.innerHTML = html;
+  saveHistory(text, html);
 };
 
-/* ================== 本地历史 ================== */
+/* ========== 历史记录 ========== */
+function loadHistory() {
+  const history = JSON.parse(localStorage.getItem("analysisHistory") || "[]");
+  historyList.innerHTML = "";
 
-function loadHistory(){
-  const history=JSON.parse(localStorage.getItem("analysisHistory")||"[]");
-  const list=document.getElementById("historyList");
-  list.innerHTML="";
-
-  history.forEach((item,index)=>{
-    const div=document.createElement("div");
-    div.className="p-2 bg-gray-700 rounded cursor-pointer flex justify-between items-center";
-    div.innerHTML=`<span>${item.time}</span>
-    <span onclick="openModal(${index})">🔍</span>`;
-    list.appendChild(div);
+  history.forEach((item, index) => {
+    const div = document.createElement("div");
+    div.className = "history-item flex justify-between items-center";
+    div.innerHTML = `<span>${item.time}</span><span>🔍</span>`;
+    div.onclick = () => openModal(index);
+    historyList.appendChild(div);
   });
 }
 
-function saveHistory(text,result){
-  const history=JSON.parse(localStorage.getItem("analysisHistory")||"[]");
-  history.unshift({time:new Date().toLocaleString(),text,result});
-  localStorage.setItem("analysisHistory",JSON.stringify(history.slice(0,20)));
+function saveHistory(text, result) {
+  const history = JSON.parse(localStorage.getItem("analysisHistory") || "[]");
+  history.unshift({ time: new Date().toLocaleString(), text, result });
+  localStorage.setItem("analysisHistory", JSON.stringify(history.slice(0, 20)));
   loadHistory();
 }
 
-function openModal(index){
-  const history=JSON.parse(localStorage.getItem("analysisHistory")||"[]");
-  document.getElementById("modalContent").innerHTML=history[index].result;
-  document.getElementById("historyModal").classList.remove("hidden");
+function openModal(index) {
+  const history = JSON.parse(localStorage.getItem("analysisHistory") || "[]");
+  modalContent.innerHTML = history[index].result;
+  historyModal.classList.remove("hidden");
 }
 
-function closeModal(){
-  document.getElementById("historyModal").classList.add("hidden");
+function closeModal() {
+  historyModal.classList.add("hidden");
 }
 
 loadHistory();
 
-/* ================== 复制 ================== */
-
-document.getElementById("copyBtn").onclick=()=>{
-  navigator.clipboard.writeText(document.getElementById("result").innerText);
+/* ========== 复制 ========== */
+copyBtn.onclick = () => {
+  navigator.clipboard.writeText(result.innerText);
 };
 
-/* ================== ✅ 修复 PDF 半页问题 ================== */
+/* ========== ✅ PDF 导出（强制白底黑字） ========== */
+pdfBtn.onclick = async () => {
 
-document.getElementById("pdfBtn").onclick=()=>{
+  const originalTheme = theme;
 
-  const element=document.getElementById("result");
+  applyTheme("light");
+  await new Promise(r => setTimeout(r, 200));
 
-  const opt={
-    margin:10,
-    filename:'课堂分析报告.pdf',
-    image:{ type:'jpeg', quality:1 },
-    html2canvas:{ scale:2, useCORS:true },
-    jsPDF:{ unit:'mm', format:'a4', orientation:'portrait' },
-    pagebreak:{ mode:['css','legacy'] }
+  const opt = {
+    margin: 10,
+    filename: "课堂分析报告.pdf",
+    html2canvas: { scale: 2 },
+    jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+    pagebreak: { mode: ["css","legacy"] }
   };
 
-  html2pdf().set(opt).from(element).save();
-};
+  await html2pdf().set(opt).from(result).save();
 
+  applyTheme(originalTheme);
+};
 </script>
+
 </body>
 </html>
