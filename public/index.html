@@ -7,23 +7,20 @@
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
 
   <style>
-    body.dark {
-      background: #0f172a;
-      color: white;
-    }
-    body.light {
-      background: #f5f7fa;
-      color: #111827;
-    }
+    body.dark { background:#0f172a; color:white; }
+    body.light { background:#f5f7fa; color:#111827; }
+
     .glass-dark {
       background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.1);
+      border:1px solid rgba(255,255,255,0.1);
     }
+
     .glass-light {
-      background: white;
-      border: 1px solid #e5e7eb;
+      background:white;
+      border:1px solid #e5e7eb;
     }
   </style>
 </head>
@@ -33,56 +30,47 @@
 <div class="max-w-7xl mx-auto p-6">
 
   <!-- 顶部 -->
-  <div class="flex justify-between items-center mb-8">
-    <div>
-      <h1 class="text-4xl font-bold">AI课堂反思助手</h1>
-      <p class="opacity-70">上传课堂实录，自动生成教学分析报告</p>
-    </div>
-
-    <button id="themeToggle"
-      class="px-4 py-2 rounded-xl bg-gray-800 text-white text-sm">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold">AI课堂反思助手</h1>
+    <button id="themeToggle" class="px-4 py-2 rounded-xl bg-gray-800 text-white text-sm">
       切换模式
     </button>
   </div>
 
-  <!-- 主体 -->
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-    <!-- 左侧输入 -->
-    <div id="leftCard" class="rounded-3xl p-6 shadow-xl">
-      <h2 class="text-2xl font-bold mb-4">课堂实录</h2>
+    <!-- ✅ 历史记录 -->
+    <div id="historyCard" class="glass-dark rounded-3xl p-4 h-[600px] overflow-y-auto">
+      <h2 class="text-lg font-bold mb-4">历史记录</h2>
+      <div id="historyList" class="space-y-2 text-sm"></div>
+    </div>
 
-      <textarea
-        id="inputText"
-        rows="16"
-        class="w-full p-4 rounded-xl border outline-none"
-        placeholder="粘贴课堂实录..."
-      ></textarea>
+    <!-- ✅ 输入 -->
+    <div id="leftCard" class="glass-dark rounded-3xl p-6">
+      <h2 class="text-xl font-bold mb-4">课堂实录</h2>
 
-      <button
-        id="analyzeBtn"
-        class="w-full mt-6 py-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-lg font-semibold transition-all"
-      >
+      <textarea id="inputText"
+        rows="12"
+        class="w-full p-4 rounded-xl border bg-transparent"
+        placeholder="粘贴课堂实录..."></textarea>
+
+      <button id="analyzeBtn"
+        class="w-full mt-4 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white">
         开始分析
       </button>
     </div>
 
-    <!-- 右侧输出 -->
-    <div id="rightCard" class="rounded-3xl p-6 shadow-xl relative">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-2xl font-bold">分析结果</h2>
-
-        <div class="flex gap-3">
-          <button id="copyBtn"
-            class="px-4 py-2 rounded-lg bg-gray-700 text-white text-sm">
-            复制
-          </button>
-          <span id="status" class="text-sm opacity-70">等待分析</span>
+    <!-- ✅ 输出 -->
+    <div id="rightCard" class="glass-dark rounded-3xl p-6 relative">
+      <div class="flex justify-between mb-4">
+        <h2 class="text-xl font-bold">分析结果</h2>
+        <div class="flex gap-2">
+          <button id="copyBtn" class="px-3 py-1 bg-gray-700 text-white rounded-lg text-sm">复制</button>
+          <button id="pdfBtn" class="px-3 py-1 bg-green-600 text-white rounded-lg text-sm">导出PDF</button>
         </div>
       </div>
 
-      <div id="result"
-        class="prose max-w-none overflow-y-auto h-[500px]">
+      <div id="result" class="prose max-w-none h-[500px] overflow-y-auto">
         暂无结果
       </div>
     </div>
@@ -91,95 +79,116 @@
 </div>
 
 <script>
-/* =========================
-   🌗 黑白模式切换
-========================= */
 
+/* ======================
+   🌗 主题切换
+====================== */
 const themeToggle = document.getElementById("themeToggle");
 
-function applyTheme(mode) {
+function applyTheme(mode){
   document.body.className = mode + " min-h-screen transition-all duration-300";
 
-  const left = document.getElementById("leftCard");
-  const right = document.getElementById("rightCard");
+  const cards = ["historyCard","leftCard","rightCard"];
 
-  if (mode === "dark") {
-    left.className = "glass-dark rounded-3xl p-6 shadow-xl";
-    right.className = "glass-dark rounded-3xl p-6 shadow-xl relative";
-    themeToggle.className = "px-4 py-2 rounded-xl bg-gray-800 text-white text-sm";
-  } else {
-    left.className = "glass-light rounded-3xl p-6 shadow-xl";
-    right.className = "glass-light rounded-3xl p-6 shadow-xl relative";
-    themeToggle.className = "px-4 py-2 rounded-xl bg-gray-200 text-black text-sm";
-  }
+  cards.forEach(id=>{
+    const el = document.getElementById(id);
+    el.className = (mode==="dark"?"glass-dark":"glass-light") + " rounded-3xl p-6";
+  });
 }
 
 let currentTheme = localStorage.getItem("theme") || "dark";
 applyTheme(currentTheme);
 
-themeToggle.addEventListener("click", () => {
-  currentTheme = currentTheme === "dark" ? "light" : "dark";
-  localStorage.setItem("theme", currentTheme);
+themeToggle.onclick = ()=>{
+  currentTheme = currentTheme==="dark"?"light":"dark";
+  localStorage.setItem("theme",currentTheme);
   applyTheme(currentTheme);
-});
+};
 
-/* =========================
-   📤 调用后端
-========================= */
+/* ======================
+   📦 本地历史记录
+====================== */
 
-const analyzeBtn = document.getElementById("analyzeBtn");
+function loadHistory(){
+  const history = JSON.parse(localStorage.getItem("analysisHistory") || "[]");
+  const list = document.getElementById("historyList");
+  list.innerHTML = "";
 
-analyzeBtn.addEventListener("click", async () => {
+  history.forEach((item,index)=>{
+    const div = document.createElement("div");
+    div.className="p-2 bg-gray-700 rounded cursor-pointer";
+    div.innerText=item.time;
+    div.onclick=()=>{
+      document.getElementById("inputText").value=item.text;
+      document.getElementById("result").innerHTML=item.result;
+    };
+    list.appendChild(div);
+  });
+}
 
-  const text = document.getElementById("inputText").value;
-  const status = document.getElementById("status");
-  const result = document.getElementById("result");
+function saveHistory(text,result){
+  const history = JSON.parse(localStorage.getItem("analysisHistory")||"[]");
+  history.unshift({
+    time:new Date().toLocaleString(),
+    text,
+    result
+  });
+  localStorage.setItem("analysisHistory",JSON.stringify(history.slice(0,20)));
+  loadHistory();
+}
 
-  if (!text.trim()) {
-    alert("请输入课堂实录文本");
+loadHistory();
+
+/* ======================
+   📤 调用API
+====================== */
+
+document.getElementById("analyzeBtn").onclick=async()=>{
+  const text=document.getElementById("inputText").value;
+  const resultDiv=document.getElementById("result");
+
+  if(!text.trim()){
+    alert("请输入文本");
     return;
   }
 
-  status.innerText = "分析中...";
-  result.innerHTML = "";
+  resultDiv.innerHTML="分析中...";
 
-  const resp = await fetch("/api/analyze", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ text })
+  const resp=await fetch("/api/analyze",{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({text})
   });
 
-  const data = await resp.json();
+  const data=await resp.json();
+  const html=marked.parse(data.result||"无结果");
 
-  const markdown = data.result || "无返回结果";
+  resultDiv.innerHTML=html;
 
-  // ✅ Markdown 渲染
-  result.innerHTML = marked.parse(markdown);
+  saveHistory(text,html);
+};
 
-  status.innerText = "分析完成";
-});
+/* ======================
+   📋 复制
+====================== */
+document.getElementById("copyBtn").onclick=()=>{
+  navigator.clipboard.writeText(document.getElementById("result").innerText);
+};
 
-/* =========================
-   📋 一键复制
-========================= */
+/* ======================
+   📄 导出PDF
+====================== */
+document.getElementById("pdfBtn").onclick=()=>{
+  const element=document.getElementById("result");
 
-document.getElementById("copyBtn").addEventListener("click", async () => {
-
-  const text = document.getElementById("result").innerText;
-
-  await navigator.clipboard.writeText(text);
-
-  const btn = document.getElementById("copyBtn");
-  btn.innerText = "已复制 ✅";
-
-  setTimeout(() => {
-    btn.innerText = "复制";
-  }, 1500);
-});
+  html2pdf().set({
+    margin:10,
+    filename:"课堂分析报告.pdf",
+    html2canvas:{scale:2},
+    jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
+  }).from(element).save();
+};
 
 </script>
-
 </body>
 </html>
